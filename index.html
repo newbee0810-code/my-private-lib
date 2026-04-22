@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="黑教练资源编号库">
+    <meta name="apple-mobile-web-app-title" content="资源库">
     <link rel="apple-touch-icon" href="https://api.iconify.design/fluent-emoji-flat/file-folder.svg?width=180&height=180">
     <title>资源库动态管理</title>
     <style>
@@ -19,8 +19,8 @@
             font-family: -apple-system, sans-serif; 
             background: var(--bg); 
             color: var(--text); 
-            padding: 15px; 
-            padding-top: calc(15px + env(safe-area-inset-top)); 
+            padding: 12px; /* 稍微缩小外边距腾出空间 */
+            padding-top: calc(12px + env(safe-area-inset-top)); 
             padding-bottom: calc(100px + env(safe-area-inset-bottom)); 
             margin: 0; 
             -webkit-tap-highlight-color: transparent; 
@@ -28,31 +28,36 @@
         
         .header-box { text-align: center; margin-bottom: 20px; }
         #inputArea { 
-            width: 100%; height: 300px; background: #334155; color: #fff; 
-            border: 1px solid #475569; border-radius: 12px; padding: 15px; 
+            width: 100%; height: 250px; background: #334155; color: #fff; 
+            border: 1px solid #475569; border-radius: 12px; padding: 12px; 
             font-family: monospace; display: none; margin-top: 15px; line-height: 1.5; box-sizing: border-box;
         }
         .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn { padding: 8px 18px; border-radius: 8px; border: none; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; }
         .btn-edit { background: #3b82f6; color: white; }
         .btn-save { background: #10b981; color: white; display: none; }
 
-        h2 { font-size: 1.1rem; border-left: 4px solid #fff; padding-left: 10px; margin: 30px 0 15px; display: flex; align-items: center; justify-content: space-between; }
-        .count { font-size: 0.8rem; background: #334155; padding: 2px 8px; border-radius: 10px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+        h2 { font-size: 1rem; border-left: 4px solid #fff; padding-left: 8px; margin: 25px 0 12px; display: flex; align-items: center; justify-content: space-between; }
+        .count { font-size: 0.75rem; background: #334155; padding: 2px 8px; border-radius: 10px; }
         
+        /* 【关键修改】最小宽度降至 150px，保证绝大多数手机都能显示两列 */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        
+        /* 压缩了卡片的内边距和圆角 */
         .card { 
-            background: var(--card); border-radius: 10px; padding: 12px; display: flex; 
+            background: var(--card); border-radius: 8px; padding: 8px; display: flex; 
             align-items: center; border: 1px solid #334155; cursor: pointer; transition: background 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .card:active { background: #334155; transform: scale(0.98); }
 
+        /* 缩小了左侧颜色块的体积，给文字留出空间 */
         .badge { 
-            width: 65px; height: 32px; display: flex; align-items: center; justify-content: center; 
-            border-radius: 6px; font-weight: bold; font-size: 11px; margin-right: 12px; flex-shrink: 0; color: white; transition: 0.3s;
+            width: 50px; height: 26px; display: flex; align-items: center; justify-content: center; 
+            border-radius: 6px; font-weight: bold; font-size: 11px; margin-right: 8px; flex-shrink: 0; color: white; transition: 0.3s;
         }
-        .title { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
+        /* 稍微缩小了标题字号以防溢出截断过多 */
+        .title { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
 
         .bg-A { background: var(--A); } .bg-B { background: var(--B); }
         .bg-C { background: var(--C); } .bg-D { background: var(--D); }
@@ -63,8 +68,8 @@
 <body>
 
 <div class="header-box">
-    <h1 style="margin:0; font-size: 1.5rem;">黑教练资源编号库</h1>
-    <p style="color: var(--dim); font-size: 0.9rem;">点击卡片复制 #编号</p>
+    <h1 style="margin:0; font-size: 1.4rem;">私域库</h1>
+    <p style="color: var(--dim); font-size: 0.85rem;">点击卡片复制 #编号</p>
     
     <div class="btn-group">
         <button id="editBtn" class="btn btn-edit" onclick="toggleEdit()">编辑/添加</button>
@@ -77,11 +82,11 @@
 
 <script>
     const defaultData = `A0035 黑皮教练采访
-B0003 公牛 
+B0003 公牛 (第四期)
 B0017 ZKJ TOP1
-B0019 体育生E
+B0019 体育生 E
 B0027 尻爺
-B0036 黑皮肌肉教练
+B0036 黑皮肌肉教练 (三期)
 B0045 木脑阔
 B0047 五阿哥
 B0048 JBYS
@@ -93,13 +98,13 @@ B0076 阿拉斯加犬
 B0081 壳马
 B0088 晒痕兽兽
 B0098 小6
-B0103 伏特爆
-B0104 性瘾学弟
+B0103 伏特爆 3P / 肌肉
+B0104 性瘾学弟 小肥柴
 C0001 任
 C0008 郝楠
 C0011 返航
-C0015 九十斤怪兽
-D0002 MSUN SLAVE
+C0015 九十斤怪兽 蒙面
+D0002 MSUN SLAVE (十四期)
 D0008a 健美 / 亨利夫妇
 D0018 菲律宾直男
 D0033 潮吹大师 Ron
@@ -113,8 +118,8 @@ D0176 Erostri
 DJ0008 日本系列
 E0001 直男与 0
 E0012 伪娘综合
-F0003 直男
-H0009 优质精牛
+F0003 直男 (第十二期)
+H0009 优质精牛 (十六期)
 H0011 Rushdick
 H0015 肌肉精牛 Locked
 H0017 口天使
@@ -147,7 +152,6 @@ H0018 Friendlyhotman`;
         toggleEdit();
     }
 
-    // 重构的复制函数：双保险机制适配 Mac/iOS
     async function copyCode(element, codeText) {
         const copyString = "#" + codeText;
         const badge = element.querySelector('.badge');
@@ -155,10 +159,9 @@ H0018 Friendlyhotman`;
         const originalBg = badge.style.backgroundColor;
         const originalText = badge.innerText;
         
-        // 成功后的动画反馈抽离成单独函数
         const triggerSuccessUI = () => {
             badge.style.backgroundColor = '#10b981'; 
-            badge.innerText = '已复制';
+            badge.innerText = '复制成功'; // 适应缩小后的宽度，或者换成图标
             if (navigator.vibrate) navigator.vibrate(50);
             setTimeout(() => {
                 badge.style.backgroundColor = originalBg;
@@ -166,23 +169,19 @@ H0018 Friendlyhotman`;
             }, 800);
         };
 
-        // 尝试 1：使用现代异步剪贴板 API (推荐)
         if (navigator.clipboard && navigator.clipboard.writeText) {
             try {
                 await navigator.clipboard.writeText(copyString);
                 triggerSuccessUI();
-                return; // 成功就直接结束
+                return; 
             } catch (err) {
                 console.log("Modern API failed, trying fallback...", err);
             }
         }
 
-        // 尝试 2：优雅降级到 execCommand，并针对 Mac Safari 优化
         const textArea = document.createElement("textarea");
         textArea.value = copyString;
         
-        // 【关键修复】不把它放到屏幕外，而是把它设为全透明且固定在原位
-        // 这样 Safari 就不会觉得我们在干坏事
         textArea.style.position = "fixed";
         textArea.style.top = "50%";
         textArea.style.left = "50%";
@@ -211,7 +210,7 @@ H0018 Friendlyhotman`;
     function render() {
         const lines = currentData.split('\n').filter(l => l.trim() !== '');
         const groups = {};
-        const typeNames = { 'A':'采访', 'B':'剧情/Gay', 'C':'稀有男神', 'D':'综合海外', 'E':'伪娘', 'F':'纯直男', 'H':'特定玩法' };
+        const typeNames = { 'A':'采访', 'B':'剧情/Gay', 'C':'稀有男神', 'D':'综合海外', 'E':'伪娘', 'F':'直男', 'H':'玩法' }; // 名字缩短一点以适应双列
 
         lines.forEach(line => {
             const match = line.match(/^([A-Z]+)(\d+[a-z]?)\s*(.*)$/i);
