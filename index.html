@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes"> <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> <meta name="apple-mobile-web-app-title" content="资源库"> <link rel="apple-touch-icon" href="https://api.iconify.design/fluent-emoji-flat/file-folder.svg?width=180&height=180">
+
     <title>资源库动态管理</title>
     <style>
         :root {
@@ -10,35 +13,49 @@
             --A: #3b82f6; --B: #8b5cf6; --C: #f59e0b; --D: #64748b;
             --E: #ec4899; --F: #10b981; --H: #ef4444;
         }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; padding-bottom: 100px; }
         
-        /* 头部控制区 */
+        /* 增加了 env(safe-area-inset-top) 适配苹果刘海屏和底部横条 */
+        body { 
+            font-family: -apple-system, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            padding: 15px; 
+            padding-top: calc(15px + env(safe-area-inset-top)); 
+            padding-bottom: calc(100px + env(safe-area-inset-bottom)); 
+            margin: 0; 
+            /* 防止iOS点击时出现灰色半透明遮罩 */
+            -webkit-tap-highlight-color: transparent; 
+        }
+        
         .header-box { text-align: center; margin-bottom: 20px; }
         #inputArea { 
             width: 100%; height: 300px; background: #334155; color: #fff; 
             border: 1px solid #475569; border-radius: 12px; padding: 15px; 
-            font-family: monospace; display: none; margin-top: 15px; line-height: 1.5;
+            font-family: monospace; display: none; margin-top: 15px; line-height: 1.5; box-sizing: border-box;
         }
         .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
-        .btn { 
-            padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; 
-            cursor: pointer; transition: 0.2s;
-        }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-edit { background: #3b82f6; color: white; }
         .btn-save { background: #10b981; color: white; display: none; }
 
-        /* 内容展示区 */
         h2 { font-size: 1.1rem; border-left: 4px solid #fff; padding-left: 10px; margin: 30px 0 15px; display: flex; align-items: center; justify-content: space-between; }
         .count { font-size: 0.8rem; background: #334155; padding: 2px 8px; border-radius: 10px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
-        .card { background: var(--card); border-radius: 10px; padding: 12px; display: flex; align-items: center; border: 1px solid #334155; }
+        
+        .card { 
+            background: var(--card); border-radius: 10px; padding: 12px; display: flex; 
+            align-items: center; border: 1px solid #334155; cursor: pointer; transition: background 0.2s;
+            /* 增加一点原生卡片的阴影感 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card:active { background: #334155; transform: scale(0.98); }
+
         .badge { 
             width: 65px; height: 32px; display: flex; align-items: center; justify-content: center; 
-            border-radius: 6px; font-weight: bold; font-size: 11px; margin-right: 12px; flex-shrink: 0; color: white; 
+            border-radius: 6px; font-weight: bold; font-size: 11px; margin-right: 12px; flex-shrink: 0; color: white; transition: 0.3s;
         }
-        .title { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .title { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
 
-        /* 系列配色 */
         .bg-A { background: var(--A); } .bg-B { background: var(--B); }
         .bg-C { background: var(--C); } .bg-D { background: var(--D); }
         .bg-E { background: var(--E); } .bg-F { background: var(--F); }
@@ -48,12 +65,12 @@
 <body>
 
 <div class="header-box">
-    <h1 style="margin:0; font-size: 1.5rem;">私域库资源管理</h1>
-    <p style="color: var(--dim); font-size: 0.9rem;">手机端更新 · 自动分类排序</p>
+    <h1 style="margin:0; font-size: 1.5rem;">私域库</h1>
+    <p style="color: var(--dim); font-size: 0.9rem;">点击卡片复制 #编号</p>
     
     <div class="btn-group">
-        <button id="editBtn" class="btn btn-edit" onclick="toggleEdit()">编辑/添加数据</button>
-        <button id="saveBtn" class="btn btn-save" onclick="saveData()">保存并更新页面</button>
+        <button id="editBtn" class="btn btn-edit" onclick="toggleEdit()">编辑/添加</button>
+        <button id="saveBtn" class="btn btn-save" onclick="saveData()">保存更新</button>
     </div>
     <textarea id="inputArea" placeholder="每行一个资源，例如：B0001 测试视频"></textarea>
 </div>
@@ -61,7 +78,6 @@
 <div id="displayZone"></div>
 
 <script>
-    // 初始内置 41 条数据
     const defaultData = `A0035 黑皮教练采访
 B0003 公牛 (第四期)
 B0017 ZKJ TOP1
@@ -116,12 +132,15 @@ H0018 Friendlyhotman`;
         if (area.style.display === 'none' || area.style.display === '') {
             area.style.display = 'block';
             sBtn.style.display = 'inline-block';
-            eBtn.innerText = '取消修改';
+            eBtn.innerText = '取消';
             area.value = currentData;
+            
+            // 编辑时滚动到最上面，方便操作
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
             area.style.display = 'none';
             sBtn.style.display = 'none';
-            eBtn.innerText = '编辑/添加数据';
+            eBtn.innerText = '编辑/添加';
         }
     }
 
@@ -132,19 +151,55 @@ H0018 Friendlyhotman`;
         toggleEdit();
     }
 
+    function copyCode(element, codeText) {
+        const copyString = "#" + codeText;
+        const badge = element.querySelector('.badge');
+        
+        const textArea = document.createElement("textarea");
+        textArea.value = copyString;
+        textArea.style.position = "fixed"; 
+        textArea.style.left = "-9999px"; 
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            const originalBg = badge.style.backgroundColor;
+            const originalText = badge.innerText;
+            
+            badge.style.backgroundColor = '#10b981'; 
+            badge.innerText = '已复制';
+            
+            // 加入原生震动反馈 (如果设备支持)
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            
+            setTimeout(() => {
+                badge.style.backgroundColor = originalBg;
+                badge.innerText = originalText;
+            }, 800); // 稍微加快了恢复速度，更干脆
+            
+        } catch (err) {
+            alert("复制失败，请手动复制");
+        }
+        
+        document.body.removeChild(textArea);
+    }
+
     function render() {
         const lines = currentData.split('\n').filter(l => l.trim() !== '');
         const groups = {};
         const typeNames = { 'A':'采访', 'B':'剧情/Gay', 'C':'稀有男神', 'D':'综合海外', 'E':'伪娘', 'F':'纯直男', 'H':'特定玩法' };
 
         lines.forEach(line => {
-            // 正则匹配：字母 + 编号 + 剩余名称
             const match = line.match(/^([A-Z]+)(\d+[a-z]?)\s*(.*)$/i);
             if (match) {
                 const prefix = match[1].toUpperCase();
                 const code = prefix + match[2];
                 const name = match[3];
-                const mainKey = prefix.charAt(0); // 取首字母分类
+                const mainKey = prefix.charAt(0); 
 
                 if (!groups[mainKey]) groups[mainKey] = [];
                 groups[mainKey].push({ code, name });
@@ -157,7 +212,7 @@ H0018 Friendlyhotman`;
             html += `<div class="grid">`;
             groups[key].sort((a,b) => a.code.localeCompare(b.code, undefined, {numeric: true})).forEach(item => {
                 html += `
-                    <div class="card">
+                    <div class="card" onclick="copyCode(this, '${item.code}')">
                         <div class="badge bg-${key}">${item.code}</div>
                         <div class="title">${item.name}</div>
                     </div>`;
@@ -167,7 +222,6 @@ H0018 Friendlyhotman`;
         document.getElementById('displayZone').innerHTML = html;
     }
 
-    // 初始化加载
     window.onload = () => {
         const saved = localStorage.getItem('private_lib_data');
         currentData = saved ? saved : defaultData;
