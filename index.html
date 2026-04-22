@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <meta name="apple-mobile-web-app-capable" content="yes"> <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> <meta name="apple-mobile-web-app-title" content="资源库"> <link rel="apple-touch-icon" href="https://api.iconify.design/fluent-emoji-flat/file-folder.svg?width=180&height=180">
-
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="资源库">
+    <link rel="apple-touch-icon" href="https://api.iconify.design/fluent-emoji-flat/file-folder.svg?width=180&height=180">
     <title>资源库动态管理</title>
     <style>
         :root {
@@ -14,7 +15,6 @@
             --E: #ec4899; --F: #10b981; --H: #ef4444;
         }
         
-        /* 增加了 env(safe-area-inset-top) 适配苹果刘海屏和底部横条 */
         body { 
             font-family: -apple-system, sans-serif; 
             background: var(--bg); 
@@ -23,7 +23,6 @@
             padding-top: calc(15px + env(safe-area-inset-top)); 
             padding-bottom: calc(100px + env(safe-area-inset-bottom)); 
             margin: 0; 
-            /* 防止iOS点击时出现灰色半透明遮罩 */
             -webkit-tap-highlight-color: transparent; 
         }
         
@@ -45,7 +44,6 @@
         .card { 
             background: var(--card); border-radius: 10px; padding: 12px; display: flex; 
             align-items: center; border: 1px solid #334155; cursor: pointer; transition: background 0.2s;
-            /* 增加一点原生卡片的阴影感 */
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .card:active { background: #334155; transform: scale(0.98); }
@@ -134,8 +132,6 @@ H0018 Friendlyhotman`;
             sBtn.style.display = 'inline-block';
             eBtn.innerText = '取消';
             area.value = currentData;
-            
-            // 编辑时滚动到最上面，方便操作
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
             area.style.display = 'none';
@@ -151,41 +147,65 @@ H0018 Friendlyhotman`;
         toggleEdit();
     }
 
-    function copyCode(element, codeText) {
+    // 重构的复制函数：双保险机制适配 Mac/iOS
+    async function copyCode(element, codeText) {
         const copyString = "#" + codeText;
         const badge = element.querySelector('.badge');
         
+        const originalBg = badge.style.backgroundColor;
+        const originalText = badge.innerText;
+        
+        // 成功后的动画反馈抽离成单独函数
+        const triggerSuccessUI = () => {
+            badge.style.backgroundColor = '#10b981'; 
+            badge.innerText = '已复制';
+            if (navigator.vibrate) navigator.vibrate(50);
+            setTimeout(() => {
+                badge.style.backgroundColor = originalBg;
+                badge.innerText = originalText;
+            }, 800);
+        };
+
+        // 尝试 1：使用现代异步剪贴板 API (推荐)
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+                await navigator.clipboard.writeText(copyString);
+                triggerSuccessUI();
+                return; // 成功就直接结束
+            } catch (err) {
+                console.log("Modern API failed, trying fallback...", err);
+            }
+        }
+
+        // 尝试 2：优雅降级到 execCommand，并针对 Mac Safari 优化
         const textArea = document.createElement("textarea");
         textArea.value = copyString;
-        textArea.style.position = "fixed"; 
-        textArea.style.left = "-9999px"; 
+        
+        // 【关键修复】不把它放到屏幕外，而是把它设为全透明且固定在原位
+        // 这样 Safari 就不会觉得我们在干坏事
+        textArea.style.position = "fixed";
+        textArea.style.top = "50%";
+        textArea.style.left = "50%";
+        textArea.style.opacity = "0"; 
+        textArea.style.transform = "translate(-50%, -50%)"; 
+        textArea.style.pointerEvents = "none";
+        
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
         
         try {
-            document.execCommand('copy');
-            const originalBg = badge.style.backgroundColor;
-            const originalText = badge.innerText;
-            
-            badge.style.backgroundColor = '#10b981'; 
-            badge.innerText = '已复制';
-            
-            // 加入原生震动反馈 (如果设备支持)
-            if (navigator.vibrate) {
-                navigator.vibrate(50);
+            const successful = document.execCommand('copy');
+            if (successful) {
+                triggerSuccessUI();
+            } else {
+                alert("当前浏览器环境阻止了自动复制，请手动复制。");
             }
-            
-            setTimeout(() => {
-                badge.style.backgroundColor = originalBg;
-                badge.innerText = originalText;
-            }, 800); // 稍微加快了恢复速度，更干脆
-            
         } catch (err) {
-            alert("复制失败，请手动复制");
+            alert("复制失败，请检查浏览器权限。");
+        } finally {
+            document.body.removeChild(textArea);
         }
-        
-        document.body.removeChild(textArea);
     }
 
     function render() {
